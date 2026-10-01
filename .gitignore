@@ -17,3 +17,4 @@ exports/
 !.dev.vars.example
 .DS_Store
 npm-debug.log*
+package-lock.json
