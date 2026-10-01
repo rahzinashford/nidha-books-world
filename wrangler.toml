@@ -1,0 +1,28 @@
+name = "nidha-books-world"
+main = "worker/index.js"
+compatibility_date = "2026-09-30"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
+# Google Sheets catalog connection. Set secrets/vars in the Cloudflare dashboard
+# or with Wrangler; never commit service-account credentials.
+# Required: GOOGLE_SERVICE_ACCOUNT_JSON, GOOGLE_SHEETS_SPREADSHEET_ID,
+# GOOGLE_SHEETS_WORKSHEET
+# Optional: WHATSAPP_NUMBER
+
+[vars]
+GOOGLE_SHEETS_SPREADSHEET_ID = "1sFNi8K3VY-07gyCnwfXUO16J_G-0SotVMqdLKoOUFzk"
+GOOGLE_SHEETS_WORKSHEET = "Books"
+GOOGLE_SHEETS_SETTINGS_WORKSHEET = "Settings"
+
+# Optional:
+# [[kv_namespaces]]
+# binding = "METADATA_CACHE"
+# id = "replace-with-kv-namespace-id"
+
+[[r2_buckets]]
+binding = "COVERS"
+bucket_name = "nidha-book-covers"
