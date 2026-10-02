@@ -267,6 +267,14 @@ function firstText(value) {
   return listValues(value)[0] || "";
 }
 
+function publishedDateText(value) {
+  if (Array.isArray(value)) return value.map(publishedDateText).filter(Boolean).join(", ");
+  if (value && typeof value === "object") {
+    return publishedDateText(value.value ?? value.date ?? value.label ?? value.name);
+  }
+  return typeof value === "string" || typeof value === "number" ? String(value).trim() : "";
+}
+
 function sameWork(left, right) {
   const title = normalizeWorkText(left.title);
   const author = normalizeWorkText(left.author);
@@ -292,7 +300,7 @@ function book(item) {
   return {
     source: item.source, sources: [item.source], source_url: item.source_url || "", title: String(item.title || "").trim(),
     subtitle: String(item.subtitle || ""), author: String(item.author || "").trim(), isbn: normalizeIsbn(item.isbn),
-    description: plainText(item.description), publisher: String(item.publisher || ""), published_date: item.published_date || "",
+    description: plainText(item.description), publisher: String(item.publisher || ""), published_date: publishedDateText(item.published_date),
     pages: item.pages || null, categories: Array.isArray(item.categories) ? item.categories.filter(Boolean) : [],
     cover_image: item.cover_image || "", language: item.language || "", preview_link: item.preview_link || "",
     retailer_price: item.retailer_price ?? null, retailer_in_stock: item.retailer_in_stock ?? null, retailer_id: item.retailer_id || null,

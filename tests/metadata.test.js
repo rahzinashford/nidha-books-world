@@ -10,6 +10,22 @@ test("normalizes ISBN-10 to ISBN-13", () => {
   assert.equal(normalizeIsbn("not an isbn"), "");
 });
 
+test("normalizes numeric publication years to text for catalog imports", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => jsonResponse({ docs: [{
+    title: "Twisted Love",
+    author_name: ["Ana Huang"],
+    isbn: ["9780349447575"],
+    first_publish_year: 2021,
+  }] });
+  try {
+    const response = await metadataSearch("Twisted Love", "open_library");
+    assert.equal(response.results.length, 1);
+    assert.equal(response.results[0].published_date, "2021");
+    assert.equal(typeof response.results[0].published_date, "string");
+  } finally { globalThis.fetch = originalFetch; }
+});
+
 test("searches providers concurrently and returns provider statuses", async () => {
   const originalFetch = globalThis.fetch;
   const calls = [];
