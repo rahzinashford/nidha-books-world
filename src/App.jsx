@@ -166,20 +166,25 @@ function Layout({ children }) {
   return <>
     <header className={`site-header ${scrolled ? "is-scrolled" : ""}`}>
       <Link className="site-header__brand" to="/">
-        <img src="/images/logo.png" alt="" className="site-header__logo" />
-        <img src="/images/header-name.png" alt={settings.store_name} className="site-header__name" />
+        <img src="/images/logo.webp" alt="" className="site-header__logo" />
+        <img src="/images/header-name.webp" alt={settings.store_name} className="site-header__name" />
       </Link>
       <nav className="site-header__nav">
         {nav.map(([path, label]) => <Link key={path} className={`${(path === "/" ? location.pathname === "/" : location.pathname.startsWith(path)) || (isCart && path === "/cart") ? "is-active" : ""}`} to={path}>{label}</Link>)}
       </nav>
     </header>
     <main className="site-main">
+      <RouteMetadata />
       {children}
     </main>
     <footer className="site-footer">
       <div className="site-footer__inner">
         <div><span className="site-footer__name">{settings.store_name}</span><p className="site-footer__tagline">{settings.store_tagline}</p></div>
         <div className="site-footer__details"><p><Icon name="truck" /> {settings.delivery_info}</p></div>
+        <nav className="site-footer__legal" aria-label="Legal information">
+          <Link to="/privacy">Privacy notice</Link>
+          <Link to="/terms">Terms of sale</Link>
+        </nav>
       </div>
       <p className="site-footer__copyright">© {new Date().getFullYear()} {settings.store_name}. Every book has a next chapter.</p>
     </footer>
@@ -188,6 +193,78 @@ function Layout({ children }) {
       <a href={`https://wa.me/${settings.whatsapp_number}`} target="_blank" rel="noreferrer" className="tab-bar__item"><Icon name="chat" /><span>WhatsApp</span></a>
     </nav>
   </>;
+}
+
+function RouteMetadata() {
+  const { books, settings } = useStore();
+  const { pathname } = useLocation();
+  const bookMatch = pathname.match(/^\/books\/(\d+)$/);
+  const book = bookMatch ? books.find((item) => item.id === Number(bookMatch[1])) : null;
+  const isKnownPage = ["/", "/browse", "/about", "/privacy", "/terms"].includes(pathname);
+  const isPrivatePage = ["/cart", "/checkout", "/order/confirmation"].includes(pathname)
+    || pathname.startsWith("/admin");
+  let title = `${settings.store_name} | Secondhand books`;
+  let description = "Browse a carefully chosen collection of secondhand books, delivered to your doorstep.";
+
+  if (pathname === "/") {
+    title = `${settings.store_name} | Books on the move`;
+    description = `${settings.store_tagline}. Browse our carefully chosen collection of secondhand books.`;
+  } else if (pathname === "/browse") {
+    title = `Browse the Collection | ${settings.store_name}`;
+    description = "Find secondhand books by title, author, ISBN, category, or publisher.";
+  } else if (pathname === "/about") {
+    title = `About | ${settings.store_name}`;
+    description = `Meet ${settings.store_name}, a travelling bookseller with a carefully chosen collection.`;
+  } else if (pathname === "/privacy") {
+    title = `Privacy Notice | ${settings.store_name}`;
+    description = `Learn how ${settings.store_name} handles checkout details and WhatsApp orders.`;
+  } else if (pathname === "/terms") {
+    title = `Terms of Sale | ${settings.store_name}`;
+    description = `Read how book availability, delivery, payment and order arrangements are confirmed.`;
+  } else if (book) {
+    title = `${book.title} by ${book.author} | ${settings.store_name}`;
+    description = String(book.description || `Explore ${book.title} by ${book.author} in the ${settings.store_name} collection.`)
+      .replace(/\s+/g, " ").trim().slice(0, 160);
+  } else if (isPrivatePage) {
+    title = `Your order | ${settings.store_name}`;
+    description = "Review your selected books and delivery details.";
+  } else if (bookMatch) {
+    title = `Book not found | ${settings.store_name}`;
+    description = "This book is not currently available in the collection.";
+  }
+
+  const noIndex = isPrivatePage || (!isKnownPage && !book);
+  useEffect(() => {
+    const setMeta = (attribute, key, content) => {
+      let tag = document.head.querySelector(`meta[${attribute}="${key}"]`);
+      if (!tag) {
+        tag = document.createElement("meta");
+        tag.setAttribute(attribute, key);
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute("content", content);
+    };
+    const canonical = new URL(pathname, window.location.origin);
+    canonical.search = "";
+    canonical.hash = "";
+    let canonicalTag = document.head.querySelector('link[rel="canonical"]');
+    if (!canonicalTag) {
+      canonicalTag = document.createElement("link");
+      canonicalTag.rel = "canonical";
+      document.head.appendChild(canonicalTag);
+    }
+    canonicalTag.href = canonical.href;
+    document.title = title;
+    setMeta("name", "description", description);
+    setMeta("name", "robots", noIndex ? "noindex, nofollow" : "index, follow");
+    setMeta("property", "og:title", title);
+    setMeta("property", "og:description", description);
+    setMeta("property", "og:url", canonical.href);
+    setMeta("name", "twitter:title", title);
+    setMeta("name", "twitter:description", description);
+  }, [description, noIndex, pathname, title]);
+
+  return null;
 }
 
 function SearchSuggest({ value, onChange, onSubmit, className = "" }) {
@@ -218,7 +295,7 @@ function SearchSuggest({ value, onChange, onSubmit, className = "" }) {
 function BookCard({ book }) {
   return <article className="book-card reveal">
     <Link to={`/books/${book.id}`} className="book-card__link">
-      <div className="book-card__cover"><img src={resolveCover(book.cover_image)} alt={`Cover of ${book.title}`} loading="lazy" onError={(event) => { event.currentTarget.src = "/images/covers/cover-01.jpg"; }} /><span className="book-card__condition">{book.condition}</span></div>
+      <div className="book-card__cover"><img src={resolveCover(book.cover_image)} alt={`Cover of ${book.title}`} loading="lazy" onError={(event) => { event.currentTarget.src = "/images/covers/cover-01.webp"; }} /><span className="book-card__condition">{book.condition}</span></div>
       <div className="book-card__body"><h3 className="book-card__title">{book.title}</h3><p className="book-card__author">{book.author}</p><p className="book-card__price">{formatInr(book.price)}</p></div>
     </Link>
   </article>;
@@ -233,13 +310,13 @@ function Home() {
   const categories = getCategories(books);
   const goSearch = (term) => { if (term.trim()) window.location.href = `/browse?q=${encodeURIComponent(term.trim())}`; };
   return <div className="page-home">
-    <section className="hero"><div className="hero__media"><img src="/images/hero.jpg" alt={`${settings.store_name} shelves at dusk`} /><div className="hero__scrim" /></div><div className="hero__content"><p className="hero__eyebrow"><Icon>▤</Icon> Travelling bookseller</p><h1 className="hero__title">{settings.store_name}</h1><p className="hero__tagline">{settings.store_tagline}. Every spine has a past owner — and, if you like, a next one.</p><div className="hero__actions"><Link to="/browse" className="btn btn--accent btn--lg">Browse the collection</Link><a href="#delivery-info" className="btn btn--ghost-light btn--lg"><Icon>♧</Icon> How delivery works</a></div></div></section>
+    <section className="hero"><div className="hero__media"><img src="/images/hero.webp" alt={`${settings.store_name} shelves at dusk`} fetchpriority="high" /><div className="hero__scrim" /></div><div className="hero__content"><p className="hero__eyebrow"><Icon>▤</Icon> Travelling bookseller</p><h1 className="hero__title">{settings.store_name}</h1><p className="hero__tagline">{settings.store_tagline}. Every spine has a past owner — and, if you like, a next one.</p><div className="hero__actions"><Link to="/browse" className="btn btn--accent btn--lg">Browse the collection</Link><a href="#delivery-info" className="btn btn--ghost-light btn--lg"><Icon>♧</Icon> How delivery works</a></div></div></section>
     <section className="search-hero"><div className="search-hero__inner"><p className="section-eyebrow section-eyebrow--center">Card Catalog</p><h2 className="search-hero__title">What are you looking for?</h2><p className="search-hero__hint">Search by title, author, ISBN, category, or publisher.</p><SearchSuggest value={query} onChange={setQuery} onSubmit={goSearch} /><div className="search-hero__quick"><span>Or try:</span><Link to="/browse?q=poetry">Poetry</Link><Link to="/browse?condition=Like%20New">Like New</Link><Link to="/browse?q=essays">Essays</Link><Link to="/browse">Everything</Link></div></div></section>
     <BookSection eyebrow="Available now" title="Featured Books" books={featured} />
     <section className="section section--muted"><div className="section__heading"><div><p className="section-eyebrow">Recently added</p><h2>Fresh arrivals</h2></div><Link to="/browse" className="section__link">See all →</Link></div><div className="book-grid">{recent.map((book) => <BookCard key={book.id} book={book} />)}</div></section>
     <section className="section"><div className="section__heading"><div><p className="section-eyebrow">The drawers</p><h2>Browse by Category</h2></div></div><div className="drawer-grid">{categories.map((category) => <Link className="drawer-card" key={category} to={`/browse?genre=${encodeURIComponent(category)}`}><span className="drawer-card__pull" /><span className="drawer-card__label">{category}</span><span className="drawer-card__count">{books.filter((book) => book.categories?.includes(category) && book.stock > 0).length} books</span></Link>)}</div></section>
     <section className="callout" id="delivery-info"><div className="callout__inner"><Icon>♧</Icon><p className="section-eyebrow section-eyebrow--center section-eyebrow--light">Delivery available</p><h2>Books that come to you</h2><p>{settings.delivery_info}</p><a href={`https://wa.me/${settings.whatsapp_number}`} target="_blank" rel="noreferrer" className="btn btn--accent"><Icon>◌</Icon> Chat with us</a></div></section>
-    <section className="section about-teaser"><div className="about-teaser__media"><img src="/images/about.jpg" alt="Hands arranging old books for delivery" /></div><div className="about-teaser__body"><p className="section-eyebrow">Our story</p><h2>About {settings.store_name}</h2><p>{settings.store_name} started as a single crate of paperbacks on a folding table. Today we travel with a carefully chosen collection, stocked with whatever has found its way into our hands — secondhand novels, forgotten poetry, essays with someone else's notes still in the margins.</p><p>No complicated checkout. If something catches your eye, message us on WhatsApp, confirm your order, and we will arrange delivery.</p><Link to="/about" className="section__link">Read our story →</Link></div></section>
+     <section className="section about-teaser"><div className="about-teaser__media"><img src="/images/about.webp" alt="Hands arranging old books for delivery" loading="lazy" /></div><div className="about-teaser__body"><p className="section-eyebrow">Our story</p><h2>About {settings.store_name}</h2><p>{settings.store_name} started as a single crate of paperbacks on a folding table. Today we travel with a carefully chosen collection, stocked with whatever has found its way into our hands — secondhand novels, forgotten poetry, essays with someone else's notes still in the margins.</p><p>No complicated checkout. If something catches your eye, message us on WhatsApp, confirm your order, and we will arrange delivery.</p><Link to="/about" className="section__link">Read our story →</Link></div></section>
   </div>;
 }
 
@@ -278,7 +355,7 @@ function BookDetail() {
       <Link to="/browse" className="back-link"><Icon name="arrowLeft" /> Back to the collection</Link>
       <div className="book-detail__grid">
         <div className="book-detail__cover">
-          <img src={resolveCover(book.cover_image)} alt={`Cover of ${book.title}`} onError={(event) => { event.currentTarget.src = "/images/covers/cover-01.jpg"; }} />
+          <img src={resolveCover(book.cover_image)} alt={`Cover of ${book.title}`} onError={(event) => { event.currentTarget.src = "/images/covers/cover-01.webp"; }} />
           {!book.stock && <span className="badge badge--muted">Unavailable</span>}
         </div>
         <div className="book-detail__info">
@@ -364,7 +441,69 @@ function Confirmation() {
 
 function About() {
   const { settings } = useStore();
-  return <><section className="about-hero"><img src="/images/about.jpg" alt="Arranging books for delivery" /></section><section className="section about-story"><h1>A travelling bookseller, not a chain store</h1><p>{settings.store_name} started as a single crate of paperbacks on a folding table. These days we travel with a carefully chosen collection, stocked with whatever has found its way into our hands — secondhand novels, forgotten poetry, essays with someone else's notes still in the margins.</p><p>We keep ordering simple. If something catches your eye, message us on WhatsApp, confirm your order, and we will arrange delivery.</p></section><section className="section section--muted about-details"><InfoCard icon="♧" title="Delivery" text={settings.delivery_info} /><InfoCard icon="▤" title="Browse anytime" text="Explore the collection online and message us when you are ready to order." /><InfoCard icon="◌" title="Order on WhatsApp" text="Tell us what you would like and we will confirm availability and delivery." /></section><section className="callout"><div className="callout__inner"><Icon>◌</Icon><h2>Say hello</h2><p>Ask about a title, place an order, or check delivery availability.</p><a href={`https://wa.me/${settings.whatsapp_number}`} target="_blank" rel="noreferrer" className="btn btn--accent btn--lg">Message us on WhatsApp</a></div></section></>;
+  return <><section className="about-hero"><img src="/images/about.webp" alt="Arranging books for delivery" /></section><section className="section about-story"><h1>A travelling bookseller, not a chain store</h1><p>{settings.store_name} started as a single crate of paperbacks on a folding table. These days we travel with a carefully chosen collection, stocked with whatever has found its way into our hands — secondhand novels, forgotten poetry, essays with someone else's notes still in the margins.</p><p>We keep ordering simple. If something catches your eye, message us on WhatsApp, confirm your order, and we will arrange delivery.</p></section><section className="section section--muted about-details"><InfoCard icon="♧" title="Delivery" text={settings.delivery_info} /><InfoCard icon="▤" title="Browse anytime" text="Explore the collection online and message us when you are ready to order." /><InfoCard icon="◌" title="Order on WhatsApp" text="Tell us what you would like and we will confirm availability and delivery." /></section><section className="section about-legal"><h2>Customer information</h2><nav className="about-legal__links" aria-label="Customer information"><Link to="/privacy" className="section__link">Privacy Notice <span aria-hidden="true">→</span></Link><Link to="/terms" className="section__link">Terms of Sale <span aria-hidden="true">→</span></Link></nav></section><section className="callout"><div className="callout__inner"><Icon>◌</Icon><h2>Say hello</h2><p>Ask about a title, place an order, or check delivery availability.</p><a href={`https://wa.me/${settings.whatsapp_number}`} target="_blank" rel="noreferrer" className="btn btn--accent btn--lg">Message us on WhatsApp</a></div></section></>;
+}
+
+function LegalPage({ eyebrow, title, subtitle, children }) {
+  return <div className="legal-page">
+    <PageHeader eyebrow={eyebrow} title={title} subtitle={subtitle} />
+    <article className="legal-page__content">{children}</article>
+  </div>;
+}
+
+function SellerWhatsAppLink({ number, children }) {
+  const phone = String(number || "").replace(/\D/g, "");
+  return <a href={`https://wa.me/${phone}`} target="_blank" rel="noreferrer">{children}</a>;
+}
+
+function PrivacyPage() {
+  const { settings } = useStore();
+  return <LegalPage eyebrow="Your information" title="Privacy notice" subtitle={`How ${settings.store_name} handles information when you browse and prepare an order.`}>
+    <p className="legal-page__updated">Last updated: October 2, 2026</p>
+    <section>
+      <h2>Information stored while you order</h2>
+      <p>The cart and the name, phone number, and delivery address you enter at checkout are kept in your browser's session storage while you prepare an order. You do not need to create a customer account.</p>
+    </section>
+    <section>
+      <h2>WhatsApp orders</h2>
+      <p>When you choose “Place order on WhatsApp,” this site clears the saved checkout details and opens WhatsApp with a draft containing the books, quantities, subtotal, and delivery details. Review the draft and choose whether to send it. The seller receives your order details after you send the message. WhatsApp and its operator process the link and messages under their own privacy terms.</p>
+      <p>The seller uses information you share to discuss availability and arrange an order. This website does not take payment; payment arrangements are discussed directly with the seller.</p>
+    </section>
+    <section>
+      <h2>External services</h2>
+      <p>This site loads fonts from Google Fonts. Book information and WhatsApp links may take you to Google Books or WhatsApp. Those services have their own privacy practices, which apply when your browser contacts or visits them.</p>
+    </section>
+    <section>
+      <h2>Questions or privacy requests</h2>
+      <p>For a question about an order or information you shared, <SellerWhatsAppLink number={settings.whatsapp_number}>contact the seller using the WhatsApp number listed in the store settings</SellerWhatsAppLink>.</p>
+      <p>The shop operates in Kerala, India.</p>
+    </section>
+  </LegalPage>;
+}
+
+function TermsPage() {
+  const { settings } = useStore();
+  return <LegalPage eyebrow="Before you order" title="Terms of sale" subtitle={`How book requests and final order details are handled by ${settings.store_name}.`}>
+    <p className="legal-page__updated">Last updated: October 2, 2026</p>
+    <section>
+      <h2>Books and availability</h2>
+      <p>Books listed here are secondhand unless a listing says otherwise. Descriptions show the details available for each copy. Adding a book to your cart or sending a WhatsApp message is a request; availability is confirmed directly with the seller.</p>
+    </section>
+    <section>
+      <h2>Price and delivery</h2>
+      <p>The amount shown before delivery is the subtotal for the books. Delivery charges are not included and will be confirmed separately in WhatsApp. The seller will confirm the final order details with you there.</p>
+    </section>
+    <section>
+      <h2>Payment, changes, cancellations, and returns</h2>
+      <p>The site does not set a single payment method or general cancellation, return, or refund policy. Please discuss and agree the payment method, delivery arrangements, and any cancellation or return terms directly with the seller on WhatsApp before paying. Your order arrangement is made through that conversation.</p>
+      <p>Nothing in these terms is intended to limit consumer rights that cannot be excluded under applicable law.</p>
+    </section>
+    <section>
+      <h2>Contact and location</h2>
+      <p>To ask about a listing or discuss an order, <SellerWhatsAppLink number={settings.whatsapp_number}>message the seller using the WhatsApp number listed in the store settings</SellerWhatsAppLink>.</p>
+      <p>The shop operates in Kerala, India, and these terms are subject to applicable Indian law.</p>
+    </section>
+  </LegalPage>;
 }
 
 function InfoCard({ icon, title, text }) {
@@ -382,7 +521,7 @@ function NotFound() {
 function AdminLayout({ children, onLogout }) {
   const location = useLocation();
   const links = [["/admin", "Dashboard", "grid"], ["/admin/books", "Books", "book"], ["/admin/inventory", "Inventory", "boxes"], ["/admin/settings", "Settings", "settings"]];
-  return <><header className="site-header"><Link className="site-header__brand" to="/admin"><img src="/images/logo.png" alt="" className="site-header__logo" /><span className="site-header__name admin-brand-name">Nidha Books World <span className="admin-badge">Admin</span></span></Link><nav className="site-header__nav">{links.map(([path, label]) => <Link key={path} className={location.pathname === path || (path !== "/admin" && location.pathname.startsWith(path)) ? "is-active" : ""} to={path}>{label}</Link>)}</nav><div className="site-header__actions"><Link className="admin-header-link" to="/"><Icon>↗</Icon><span>View site</span></Link><button className="admin-header-link" onClick={onLogout}><Icon>↪</Icon><span>Log out</span></button></div></header><main className="site-main admin-main">{children}</main><nav className="tab-bar">{links.map(([path, label, icon]) => <Link key={path} className={`tab-bar__item ${location.pathname === path ? "is-active" : ""}`} to={path}><Icon name={icon} /><span>{label}</span></Link>)}</nav></>;
+  return <><header className="site-header"><Link className="site-header__brand" to="/admin"><img src="/images/logo.webp" alt="" className="site-header__logo" /><span className="site-header__name admin-brand-name">Nidha Books World <span className="admin-badge">Admin</span></span></Link><nav className="site-header__nav">{links.map(([path, label]) => <Link key={path} className={location.pathname === path || (path !== "/admin" && location.pathname.startsWith(path)) ? "is-active" : ""} to={path}>{label}</Link>)}</nav><div className="site-header__actions"><Link className="admin-header-link" to="/"><Icon>↗</Icon><span>View site</span></Link><button className="admin-header-link" onClick={onLogout}><Icon>↪</Icon><span>Log out</span></button></div></header><main className="site-main admin-main">{children}</main><nav className="tab-bar">{links.map(([path, label, icon]) => <Link key={path} className={`tab-bar__item ${location.pathname === path ? "is-active" : ""}`} to={path}><Icon name={icon} /><span>{label}</span></Link>)}</nav></>;
 }
 
 function AdminGuard() {
@@ -417,7 +556,7 @@ function AdminLogin({ onLogin }) {
       setLoading(false);
     }
   };
-  return <div className="admin-login"><div className="admin-login__card"><img src="/images/logo.png" alt="" className="admin-login__logo" /><h1>Admin Login</h1><p className="admin-login__hint">Sign in to manage Nidha Books World.</p>{error && <div className="admin-flash admin-flash--error">{error}</div>}<form onSubmit={submit} className="admin-form"><input name="username" type="text" autoComplete="username" tabIndex="-1" aria-hidden="true" className="sr-only" /><label className="admin-field"><span>Password</span><input name="password" type="password" autoComplete="current-password" autoFocus required /></label><button className="btn btn--primary btn--block" disabled={loading}>{loading ? "Signing in…" : "Log in"}</button></form><p className="preview-note">Sign-in is checked by the Worker. Configure ADMIN_PASSWORD and SESSION_SECRET in the environment.</p></div></div>;
+  return <div className="admin-login"><div className="admin-login__card"><img src="/images/logo.webp" alt="" className="admin-login__logo" /><h1>Admin Login</h1><p className="admin-login__hint">Sign in to manage Nidha Books World.</p>{error && <div className="admin-flash admin-flash--error">{error}</div>}<form onSubmit={submit} className="admin-form"><input name="username" type="text" autoComplete="username" tabIndex="-1" aria-hidden="true" className="sr-only" /><label className="admin-field"><span>Password</span><input name="password" type="password" autoComplete="current-password" autoFocus required /></label><button className="btn btn--primary btn--block" disabled={loading}>{loading ? "Signing in…" : "Log in"}</button></form><p className="preview-note">Sign-in is checked by the Worker. Configure ADMIN_PASSWORD and SESSION_SECRET in the environment.</p></div></div>;
 }
 
 function AdminDashboard() {
@@ -483,7 +622,7 @@ function AdminBookForm() {
   const navigate = useNavigate();
   const { books, source, warning, refresh, updateCatalogBook } = useStore();
   const existing = bookId ? books.find((book) => book.id === Number(bookId)) : null;
-  const [book, setBook] = useState(existing || { title: "", author: "", isbn: "", publisher: "", pages: "", language: "English", cover_image: "/images/covers/cover-01.jpg", description: "", categories: ["Literary Fiction"], price: 0, stock: 0, condition: "Good", is_featured: false });
+  const [book, setBook] = useState(existing || { title: "", author: "", isbn: "", publisher: "", pages: "", language: "English", cover_image: "/images/covers/cover-01.webp", description: "", categories: ["Literary Fiction"], price: 0, stock: 0, condition: "Good", is_featured: false });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [coverUploading, setCoverUploading] = useState(false);
@@ -549,7 +688,7 @@ function AdminBookForm() {
     }
   };
   return <><div className="page-header"><Link to="/admin/books" className="admin-back-link">← Back to books</Link><h1>{existing ? "Edit book" : "Add a book"}</h1></div>{error && <div className="admin-flash admin-flash--error" role="alert">{error}</div>}<form className="admin-form admin-form--wide" onSubmit={submit}><div className="admin-form-grid"><fieldset className="admin-fieldset"><legend>Catalog details</legend><Field label="Title" value={book.title} onChange={(value) => update("title", value)} required /><Field label="Author" value={book.author} onChange={(value) => update("author", value)} required /><div className="admin-field-row"><Field label="ISBN" value={book.isbn} onChange={(value) => update("isbn", value)} /><Field label="Publisher" value={book.publisher} onChange={(value) => update("publisher", value)} /></div><div className="admin-field-row"><Field label="Pages" type="number" value={book.pages} onChange={(value) => update("pages", value)} /><Field label="Language" value={book.language} onChange={(value) => update("language", value)} /></div><Field label="Cover image path or URL" value={book.cover_image} onChange={(value) => update("cover_image", value)} /><div className="admin-cover-upload">
-    <img className="admin-cover-upload__preview" src={resolveCover(book.cover_image)} alt={`Current cover for ${book.title || "this book"}`} onError={(event) => { event.currentTarget.src = "/images/covers/cover-01.jpg"; }} />
+    <img className="admin-cover-upload__preview" src={resolveCover(book.cover_image)} alt={`Current cover for ${book.title || "this book"}`} onError={(event) => { event.currentTarget.src = "/images/covers/cover-01.webp"; }} />
     <div className="admin-cover-upload__controls">
       <input ref={coverFileRef} id="admin-cover-file" className="admin-cover-upload__input" type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadCover} aria-label="Choose a cover image from this device" />
       <button type="button" className="btn btn--ghost btn--sm" aria-controls="admin-cover-file" onClick={() => coverFileRef.current?.click()} disabled={!existing || coverUploading || saving}>{coverUploading ? "Uploading cover…" : "Upload image from device"}</button>
@@ -922,5 +1061,5 @@ function AdminImport() {
 }
 
 export default function App() {
-  return <StoreProvider><Routes><Route path="/admin/*" element={<AdminGuard />} /><Route path="/*" element={<Layout><Routes><Route path="/" element={<Home />} /><Route path="/browse" element={<Browse />} /><Route path="/books/:id" element={<BookDetail />} /><Route path="/cart" element={<Cart />} /><Route path="/checkout" element={<Checkout />} /><Route path="/order/confirmation" element={<Confirmation />} /><Route path="/about" element={<About />} /><Route path="*" element={<NotFound />} /></Routes></Layout>} /></Routes></StoreProvider>;
+  return <StoreProvider><Routes><Route path="/admin/*" element={<AdminGuard />} /><Route path="/*" element={<Layout><Routes><Route path="/" element={<Home />} /><Route path="/browse" element={<Browse />} /><Route path="/books/:id" element={<BookDetail />} /><Route path="/cart" element={<Cart />} /><Route path="/checkout" element={<Checkout />} /><Route path="/order/confirmation" element={<Confirmation />} /><Route path="/about" element={<About />} /><Route path="/privacy" element={<PrivacyPage />} /><Route path="/terms" element={<TermsPage />} /><Route path="*" element={<NotFound />} /></Routes></Layout>} /></Routes></StoreProvider>;
 }

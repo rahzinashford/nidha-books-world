@@ -31,7 +31,8 @@ export default defineConfig({
           const path = new URL(req.url || "/", "http://localhost").pathname;
           const isAuthRequest = ["POST", "post"].includes(req.method) && ["/admin/login", "/admin/logout"].includes(path);
           const isCoverRequest = path.startsWith("/_covers/");
-          if (!path.startsWith("/api/") && !isAuthRequest && !isCoverRequest) return next();
+          const isSeoRequest = ["GET", "get"].includes(req.method) && ["/robots.txt", "/sitemap.xml"].includes(path);
+          if (!path.startsWith("/api/") && !isAuthRequest && !isCoverRequest && !isSeoRequest) return next();
 
           const env = {
             GOOGLE_SERVICE_ACCOUNT_JSON: process.env.GOOGLE_SERVICE_ACCOUNT_JSON || "",
@@ -47,7 +48,7 @@ export default defineConfig({
             env.GOOGLE_SHEETS_SPREADSHEET_ID,
             env.GOOGLE_SHEETS_WORKSHEET,
           ].some(Boolean);
-          if (!hasAnyCatalogConfig && !isCoverRequest) return next();
+          if (!hasAnyCatalogConfig && !isCoverRequest && !isSeoRequest) return next();
 
           try {
             const { default: worker } = await server.ssrLoadModule("/worker/index.js");

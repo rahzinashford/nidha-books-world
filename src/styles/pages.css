@@ -54,7 +54,7 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   font-size: 0.78rem;
-  color: var(--color-accent);
+  color: var(--color-accent-on-dark);
   margin-bottom: var(--space-3);
 }
 
@@ -99,7 +99,7 @@
 }
 
 .section-eyebrow--light {
-  color: var(--color-accent);
+  color: var(--color-accent-on-dark);
 }
 
 /* --- Search centerpiece (home) ----------------------------------------- */
@@ -997,6 +997,12 @@
   color: var(--color-text-muted);
 }
 
+.about-legal__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
+}
+
 @media (min-width: 700px) {
   .about-details {
     grid-template-columns: repeat(3, 1fr);
@@ -1020,4 +1026,54 @@
 
 .not-found .btn {
   margin-top: var(--space-4);
+}
+
+/* --- Privacy and terms pages ------------------------------------------ */
+.legal-page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding-bottom: var(--space-7);
+}
+
+.legal-page__content {
+  background: var(--color-white);
+  padding: var(--space-5);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.legal-page__content section + section {
+  margin-top: var(--space-5);
+}
+
+.legal-page__content h2 {
+  font-family: var(--font-heading);
+  font-size: 1.45rem;
+  margin: 0 0 var(--space-2);
+}
+
+.legal-page__content p {
+  color: var(--color-text-muted);
+  line-height: 1.75;
+  margin: 0 0 var(--space-3);
+}
+
+.legal-page__content p:last-child {
+  margin-bottom: 0;
+}
+
+.legal-page__content a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.legal-page__updated {
+  font-size: 0.9rem;
+}
+
+@media (max-width: 480px) {
+  .legal-page__content {
+    padding: var(--space-4);
+  }
 }

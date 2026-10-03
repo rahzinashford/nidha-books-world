@@ -260,6 +260,24 @@
   margin-bottom: var(--space-2);
 }
 
+.site-footer__legal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-3) var(--space-5);
+}
+
+.site-footer__legal a {
+  color: rgba(255, 250, 241, 0.85);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.site-footer__legal a:hover,
+.site-footer__legal a:focus-visible {
+  color: var(--color-white);
+}
+
 .site-footer__copyright {
   max-width: var(--content-max);
   margin: var(--space-4) auto 0;
@@ -485,7 +503,7 @@
 .callout__inner > .icon {
   display: inline-flex;
   font-size: 2rem;
-  color: var(--color-accent);
+  color: var(--color-accent-on-dark);
   margin-bottom: var(--space-3);
   width: 2.4rem;
   height: 2.4rem;
@@ -501,7 +519,7 @@
 
 .callout__hours {
   font-weight: 600;
-  color: var(--color-accent);
+  color: var(--color-accent-on-dark);
 }
 
 .callout .btn {

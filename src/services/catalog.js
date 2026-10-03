@@ -6,7 +6,7 @@ export const DEFAULT_SETTINGS = {
   currency_symbol: "₹",
 };
 
-const covers = Array.from({ length: 10 }, (_, index) => `/images/covers/cover-${String(index + 1).padStart(2, "0")}.jpg`);
+const covers = Array.from({ length: 10 }, (_, index) => `/images/covers/cover-${String(index + 1).padStart(2, "0")}.webp`);
 
 export const PREVIEW_BOOKS = [
   ["The Weight of Rain", "Elena Marsh", "Literary Fiction", "Good", 150, 2, 1, true, "9780143423891", "Harborlight Press", 312, "A quiet, aching novel about a family reassembling itself after loss, set along a rain-soaked coastline. Foxed pages, a firm spine, and a previous owner's pencil notes in the margins."],
@@ -43,10 +43,10 @@ export const PREVIEW_BOOKS = [
 
 export function resolveCover(value) {
   const cover = String(value || "").trim();
-  if (!cover) return "/images/covers/cover-01.jpg";
+  if (!cover) return "/images/covers/cover-01.webp";
   if (/^https?:\/\//i.test(cover)) return cover;
-  if (cover.startsWith("/")) return cover;
-  return `/${cover.replace(/^static\//, "")}`;
+  const path = cover.startsWith("/") ? cover : `/${cover.replace(/^static\//, "")}`;
+  return path.startsWith("/images/") ? path.replace(/\.(?:jpe?g|png)$/i, ".webp") : path;
 }
 
 export function normalizeBook(book) {

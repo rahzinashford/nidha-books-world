@@ -140,7 +140,7 @@ test("admin writes reject requests without a same-origin browser origin", async 
   ), env);
   assert.equal(crossOriginLogout.status, 403);
 
-  const schemeMismatch = await worker.fetch(new Request("http://example.test/api/admin/catalog", {
+  const schemeMismatch = await worker.fetch(new Request("https://example.test/api/admin/catalog", {
     method: "POST",
     headers: { "Content-Type": "application/json", Origin: "https://example.test", Cookie: cookie },
     body: JSON.stringify({ title: "Scheme mismatch", author: "Attacker", price: 10, stock: 1 }),

@@ -3,6 +3,7 @@ import { appendBook, deleteBook, importCopy, patchBook, readSettings, saveSettin
 import { metadataSearch } from "./metadata";
 import { MAX_COVER_BYTES, saveBookCover, serveBookCover } from "./covers";
 import { createAdminCookie, clearAdminCookie, readSession } from "./sessions";
+import { createRobotsTxt, createSitemapXml, rewriteDocumentMetadata } from "./seo";
 
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", ...headers } });
 const isAdminApiPath = (path) => path.startsWith("/api/admin");
@@ -53,6 +54,21 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const path = url.pathname;
+    if (url.protocol === "http:") {
+      url.protocol = "https:";
+      return Response.redirect(url.toString(), 308);
+    }
+    if (path === "/robots.txt" && request.method === "GET") {
+      return new Response(createRobotsTxt(url.origin), { headers: { "Content-Type": "text/plain; charset=utf-8" } });
+    }
+    if (path === "/sitemap.xml" && request.method === "GET") {
+      try {
+        const { books } = await getCatalog(env);
+        return new Response(createSitemapXml(url.origin, books), { headers: { "Content-Type": "application/xml; charset=utf-8" } });
+      } catch {
+        return new Response("Sitemap unavailable because the public catalog could not be read.\n", { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+      }
+    }
     if (path.startsWith("/_covers/")) {
       if (request.method !== "GET" && request.method !== "HEAD") return new Response("Method not allowed", { status: 405, headers: { Allow: "GET, HEAD" } });
       const cover = await serveBookCover(request, env);
@@ -176,7 +192,16 @@ export default {
         return json({ error: error.message || "Invalid metadata search request.", code: "INVALID_METADATA_SEARCH" }, 400);
       }
     }
-    if (env.ASSETS) return env.ASSETS.fetch(request);
+    if (env.ASSETS) {
+      const response = await env.ASSETS.fetch(request);
+      if (request.method !== "GET" || !response.headers.get("Content-Type")?.startsWith("text/html")) return response;
+      const headers = new Headers(response.headers);
+      headers.delete("Content-Length");
+      headers.delete("Content-Encoding");
+      headers.delete("ETag");
+      const html = rewriteDocumentMetadata(await response.text(), url);
+      return new Response(html, { status: response.status, statusText: response.statusText, headers });
+    }
     return new Response("Not found", { status: 404 });
   },
 };
