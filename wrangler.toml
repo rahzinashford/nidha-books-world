@@ -27,9 +27,23 @@ GOOGLE_SHEETS_SETTINGS_WORKSHEET = "Settings"
 binding = "COVERS"
 bucket_name = "nidha-book-covers"
 
-# ...
+
 [previews.vars]
 GOOGLE_SHEETS_SETTINGS_WORKSHEET = "Settings"
 GOOGLE_SHEETS_SPREADSHEET_ID = "1sFNi8K3VY-07gyCnwfXUO16J_G-0SotVMqdLKoOUFzk"
 GOOGLE_SHEETS_WORKSHEET = "React-Books"
-# ...
+
+
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+invocation_logs = true
+persist = true
+
+[observability.traces]
+enabled = false
+head_sampling_rate = 1
+persist = true
+
+[observability.issue_detection]
+enabled = false
